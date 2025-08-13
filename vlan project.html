@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VLAN & Subnet Visualization Tool</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #1e1e1e; color: white; text-align: center; }
+        h1 { color: #00d1b2; }
+        input, button { padding: 8px; margin: 5px; border-radius: 5px; border: none; }
+        table { width: 90%; margin: 20px auto; border-collapse: collapse; }
+        th, td { border: 1px solid #555; padding: 8px; }
+        #network { width: 90%; height: 400px; margin: 20px auto; background: #2a2a2a; border-radius: 10px; }
+    </style>
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+</head>
+<body>
+    <h1>📡 VLAN & Subnet Visualization Tool</h1>
+
+    <!-- Input Form -->
+    <input type="text" id="vlan_id" placeholder="VLAN ID" required>
+    <input type="text" id="device" placeholder="Device Name" required>
+    <input type="text" id="subnet" placeholder="Subnet (e.g. 192.168.10.0/24)" required>
+    <button onclick="addVLAN()">Add VLAN</button>
+
+    <!-- VLAN Table -->
+    <table id="vlanTable">
+        <tr>
+            <th>VLAN</th>
+            <th>Device</th>
+            <th>Subnet</th>
+            <th>Network</th>
+            <th>Broadcast</th>
+            <th>IP Range</th>
+        </tr>
+    </table>
+
+    <!-- Network Graph -->
+    <div id="network"></div>
+
+    <script>
+        const vlanData = [];
+        const nodes = new vis.DataSet([]);
+        const edges = new vis.DataSet([]);
+        const container = document.getElementById('network');
+        const network = new vis.Network(container, { nodes, edges }, { physics: true });
+
+        function calculateSubnet(subnet) {
+            const [ip, prefix] = subnet.split('/');
+            const maskBits = parseInt(prefix);
+            const ipParts = ip.split('.').map(Number);
+            const mask = (0xFFFFFFFF << (32 - maskBits)) >>> 0;
+
+            const ipNum = (ipParts[0] << 24) | (ipParts[1] << 16) | (ipParts[2] << 8) | ipParts[3];
+            const networkNum = ipNum & mask;
+            const broadcastNum = networkNum | (~mask >>> 0);
+
+            function numToIP(num) {
+                return [(num >>> 24) & 255, (num >>> 16) & 255, (num >>> 8) & 255, num & 255].join('.');
+            }
+
+            return {
+                network: numToIP(networkNum),
+                broadcast: numToIP(broadcastNum),
+                ipRange: `${numToIP(networkNum + 1)} - ${numToIP(broadcastNum - 1)}`
+            };
+        }
+
+        function addVLAN() {
+            const vlan = document.getElementById('vlan_id').value;
+            const device = document.getElementById('device').value;
+            const subnet = document.getElementById('subnet').value;
+
+            if (!vlan || !device || !subnet) return;
+
+            const details = calculateSubnet(subnet);
+
+            vlanData.push({ vlan, device, subnet, ...details });
+
+            // Add to table
+            const table = document.getElementById('vlanTable');
+            const row = table.insertRow();
+            row.innerHTML = `<td>${vlan}</td><td>${device}</td><td>${subnet}</td><td>${details.network}</td><td>${details.broadcast}</td><td>${details.ipRange}</td>`;
+
+            // Add to graph
+            if (!nodes.getIds().includes(`VLAN${vlan}`)) {
+                nodes.add({ id: `VLAN${vlan}`, label: `VLAN ${vlan}`, shape: "ellipse", color: "orange" });
+            }
+            nodes.add({ id: device, label: `${device}\n${subnet}`, shape: "box", color: "lightblue" });
+            edges.add({ from: `VLAN${vlan}`, to: device });
+        }
+    </script>
+</body>
+</html>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VLAN & Subnet Visualization Tool</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #1e1e1e; color: white; text-align: center; }
+        h1 { color: #00d1b2; }
+        input, button { padding: 8px; margin: 5px; border-radius: 5px; border: none; }
+        table { width: 90%; margin: 20px auto; border-collapse: collapse; }
+        th, td { border: 1px solid #555; padding: 8px; }
+        #network { width: 90%; height: 400px; margin: 20px auto; background: #2a2a2a; border-radius: 10px; }
+    </style>
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+</head>
+<body>
+    <h1>📡 VLAN & Subnet Visualization Tool</h1>
+
+    <!-- Input Form -->
+    <input type="text" id="vlan_id" placeholder="VLAN ID" required>
+    <input type="text" id="device" placeholder="Device Name" required>
+    <input type="text" id="subnet" placeholder="Subnet (e.g. 192.168.10.0/24)" required>
+    <button onclick="addVLAN()">Add VLAN</button>
+
+    <!-- VLAN Table -->
+    <table id="vlanTable">
+        <tr>
+            <th>VLAN</th>
+            <th>Device</th>
+            <th>Subnet</th>
+            <th>Network</th>
+            <th>Broadcast</th>
+            <th>IP Range</th>
+        </tr>
+    </table>
+
+    <!-- Network Graph -->
+    <div id="network"></div>
+
+    <script>
+        const vlanData = [];
+        const nodes = new vis.DataSet([]);
+        const edges = new vis.DataSet([]);
+        const container = document.getElementById('network');
+        const network = new vis.Network(container, { nodes, edges }, { physics: true });
+
+        function calculateSubnet(subnet) {
+            const [ip, prefix] = subnet.split('/');
+            const maskBits = parseInt(prefix);
+            const ipParts = ip.split('.').map(Number);
+            const mask = (0xFFFFFFFF << (32 - maskBits)) >>> 0;
+
+            const ipNum = (ipParts[0] << 24) | (ipParts[1] << 16) | (ipParts[2] << 8) | ipParts[3];
+            const networkNum = ipNum & mask;
+            const broadcastNum = networkNum | (~mask >>> 0);
+
+            function numToIP(num) {
+                return [(num >>> 24) & 255, (num >>> 16) & 255, (num >>> 8) & 255, num & 255].join('.');
+            }
+
+            return {
+                network: numToIP(networkNum),
+                broadcast: numToIP(broadcastNum),
+                ipRange: `${numToIP(networkNum + 1)} - ${numToIP(broadcastNum - 1)}`
+            };
+        }
+
+        function addVLAN() {
+            const vlan = document.getElementById('vlan_id').value;
+            const device = document.getElementById('device').value;
+            const subnet = document.getElementById('subnet').value;
+
+            if (!vlan || !device || !subnet) return;
+
+            const details = calculateSubnet(subnet);
+
+            vlanData.push({ vlan, device, subnet, ...details });
+
+            // Add to table
+            const table = document.getElementById('vlanTable');
+            const row = table.insertRow();
+            row.innerHTML = `<td>${vlan}</td><td>${device}</td><td>${subnet}</td><td>${details.network}</td><td>${details.broadcast}</td><td>${details.ipRange}</td>`;
+
+            // Add to graph
+            if (!nodes.getIds().includes(`VLAN${vlan}`)) {
+                nodes.add({ id: `VLAN${vlan}`, label: `VLAN ${vlan}`, shape: "ellipse", color: "orange" });
+            }
+            nodes.add({ id: device, label: `${device}\n${subnet}`, shape: "box", color: "lightblue" });
+            edges.add({ from: `VLAN${vlan}`, to: device });
+        }
+    </script>
+</body>
+</html>
